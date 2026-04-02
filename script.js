@@ -259,10 +259,20 @@ function createItem() {
     // Determine the type of item to spawn
     const randomValue = Math.random();
 
-    if (lives < 3) {
-        if (randomValue < 0.9) {
-          // 90% chance for bacteria
+    // Hard difficulty
+    if (score >= 10000) {
+      if (lives < 3) {
+        if (randomValue < 0.5) {
+          // 50% chance for bacteria
           createSingleItem('bacteria', '🦠', 92);
+        } else if (randomValue >= 0.5 && randomValue < 0.7) {
+          // 20% chance for two bacteria stacked (bottom, harder obstacle)
+          createSingleItem('bacteria', '🦠', 92);
+          createSingleItem('bacteria', '🦠', 132);
+        } else if (randomValue >= 0.7 && randomValue < 0.9) {
+          // 20% chance for two bacteria stacked (top, harder obstacle)
+          createSingleItem('bacteria', '🦠', 92);
+          createSingleItem('bacteria', '🦠', 282);
         } else if (randomValue >= 0.9 && randomValue < 0.99) {
           // 9% chance for bacteria with water on top
           createSingleItem('bacteria', '🦠', 92);
@@ -272,15 +282,82 @@ function createItem() {
           createSingleItem('bacteria', '🦠', 92);
           createSingleItem('heart', '❤️', 302);
         }
-    } else {
-      if (randomValue < 0.9) {
-          // 90% chance for bacteria
-          createSingleItem('bacteria', '🦠', 92);
       } else {
+        if (randomValue < 0.5) {
+          // 50% chance for bacteria
+          createSingleItem('bacteria', '🦠', 92);
+        } else if (randomValue >= 0.5 && randomValue < 0.7) {
+          // 20% chance for two bacteria stacked (bottom, harder obstacle)
+          createSingleItem('bacteria', '🦠', 92);
+          createSingleItem('bacteria', '🦠', 132);
+        } else if (randomValue >= 0.7 && randomValue < 0.9) {
+          // 20% chance for two bacteria stacked (top, harder obstacle)
+          createSingleItem('bacteria', '🦠', 92);
+          createSingleItem('bacteria', '🦠', 282);
+        } else {
           // 10% chance for bacteria with water on top
           createSingleItem('bacteria', '🦠', 92);
           createSingleItem('water', '💧', randomInRange(132, 282));
-      } 
+        } 
+      }
+    // Medium difficulty
+    } else if (score >= 5000) {
+      if (lives < 3) {
+        if (randomValue < 0.7) {
+          // 70% chance for bacteria
+          createSingleItem('bacteria', '🦠', 92);
+        } else if (randomValue >= 0.7 && randomValue < 0.9) {
+          // 20% chance for two bacteria stacked (harder obstacle)
+          createSingleItem('bacteria', '🦠', 92);
+          createSingleItem('bacteria', '🦠', 132);
+        } else if (randomValue >= 0.9 && randomValue < 0.97) {
+          // 7% chance for bacteria with water on top
+          createSingleItem('bacteria', '🦠', 92);
+          createSingleItem('water', '💧', randomInRange(132, 282));
+        } else if (randomValue >= 0.97) {
+          // 3% chance for bacteria with heart on top (extra life)
+          createSingleItem('bacteria', '🦠', 92);
+          createSingleItem('heart', '❤️', 302);
+        }
+      } else {
+        if (randomValue < 0.7) {
+          // 70% chance for bacteria
+          createSingleItem('bacteria', '🦠', 92);
+        } else if (randomValue >= 0.7 && randomValue < 0.9) {
+          // 20% chance for two bacteria stacked (harder obstacle)
+          createSingleItem('bacteria', '🦠', 92);
+          createSingleItem('bacteria', '🦠', 132);
+        } else {
+          // 10% chance for bacteria with water on top
+          createSingleItem('bacteria', '🦠', 92);
+          createSingleItem('water', '💧', randomInRange(132, 282));
+        } 
+      }
+    // Easy difficulty
+    } else {
+      if (lives < 3) {
+        if (randomValue < 0.9) {
+          // 90% chance for bacteria
+          createSingleItem('bacteria', '🦠', 92);
+        } else if (randomValue >= 0.9 && randomValue < 0.95) {
+          // 5% chance for bacteria with water on top
+          createSingleItem('bacteria', '🦠', 92);
+          createSingleItem('water', '💧', randomInRange(132, 282));
+        } else if (randomValue >= 0.95) {
+          // 5% chance for bacteria with heart on top (extra life)
+          createSingleItem('bacteria', '🦠', 92);
+          createSingleItem('heart', '❤️', 302);
+        }
+      } else {
+        if (randomValue < 0.9) {
+          // 90% chance for bacteria
+          createSingleItem('bacteria', '🦠', 92);
+        } else {
+          // 10% chance for bacteria with water on top
+          createSingleItem('bacteria', '🦠', 92);
+          createSingleItem('water', '💧', randomInRange(132, 282));
+        } 
+      }
     }
 }
 
@@ -378,15 +455,32 @@ function updateDistanceScore() {
 	}
 }
 
-function gameLoop() {
-	if (isGameRunning) {
-		updateRunner();
-		updateItems();
-		updateSpawning();
-		updateDistanceScore();
-	}
+function updateGameBackground() {
+    if (score >= 10000) {
+        game.classList.remove('day', 'evening');
+        game.classList.add('night'); // Hard difficulty = night
+        jumpInfoMessage.textContent = "Hard (10000+): Stay sharp! Avoid bacterias!";
+    } else if (score >= 5000) {
+        game.classList.remove('day', 'night');
+        game.classList.add('evening'); // Medium difficulty = evening
+        jumpInfoMessage.textContent = "Medium (5000-10000): Watch out for stacked bacterias!";
+    } else {
+        game.classList.remove('evening', 'night');
+        game.classList.add('day'); // Easy difficulty = day
+        jumpInfoMessage.textContent = "Easy (0-5000): Tap to jump and collect water!";
+    }
+}
 
-	requestAnimationFrame(gameLoop);
+function gameLoop() {
+    if (isGameRunning) {
+        updateRunner();
+        updateItems();
+        updateSpawning();
+        updateDistanceScore();
+        updateGameBackground(); // Update background based on score
+    }
+
+    requestAnimationFrame(gameLoop);
 }
 
 // Input controls: spacebar + mouse/touch press
