@@ -127,6 +127,34 @@ h1 {
 	font-weight: 600;
 }
 
+.difficulty-buttons {
+	display: flex;
+	gap: 10px;
+	justify-content: center;
+	flex-wrap: wrap;
+}
+
+.difficulty-button {
+	border: 2px solid var(--cw-blue);
+	background: var(--white);
+	color: var(--ink);
+	border-radius: 999px;
+  font-size: 1rem;
+	font-weight: 700;
+	padding: 10px 16px;
+	cursor: pointer;
+	min-width: 96px;
+}
+
+.difficulty-button:hover {
+	background: #eef7ff;
+}
+
+.difficulty-button.active {
+	background: var(--cw-yellow);
+	border-color: #cc9f00;
+}
+
 .overlay.show {
 	display: grid;
 }

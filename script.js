@@ -8,6 +8,8 @@ const gameOverOverlay = document.getElementById('gameOverOverlay');
 const finalScoreText = document.getElementById('finalScore');
 const restartButton = document.getElementById('restartButton');
 const jumpInfoMessage = document.getElementById('jumpInfoMessage');
+const difficultyButtons = document.querySelectorAll('.difficulty-button');
+const startPrompt = document.getElementById('startPrompt');
 
 // Adjust game speed dynamically based on screen size
 const isMobile = window.matchMedia('(max-width: 767px)').matches;
@@ -35,6 +37,46 @@ let distanceCounter = 0;
 let gameSpeed = 4.5;
 let spawnTimer = 0;
 let nextSpawnTime = randomInRange(80, 160);
+let spawnMin = 80;
+let spawnMax = 160;
+let speedRamp = 0.03;
+let speedCap = 10;
+
+// Player picks one difficulty before each run
+let selectedDifficulty = null;
+
+const difficultySettings = {
+  easy: {
+    label: 'Easy',
+    startSpeed: 4.2,
+    mobileSpeed: 3.4,
+    spawnMin: 95,
+    spawnMax: 180,
+    speedRamp: 0.02,
+    speedCap: 8,
+    message: 'Easy: Tap to jump and collect water!'
+  },
+  medium: {
+    label: 'Medium',
+    startSpeed: 4.8,
+    mobileSpeed: 3.8,
+    spawnMin: 80,
+    spawnMax: 150,
+    speedRamp: 0.03,
+    speedCap: 9,
+    message: 'Medium: Watch out for stacked bacterias!'
+  },
+  hard: {
+    label: 'Hard',
+    startSpeed: 5.4,
+    mobileSpeed: 4.2,
+    spawnMin: 68,
+    spawnMax: 128,
+    speedRamp: 0.04,
+    speedCap: 10,
+    message: 'Hard: Stay sharp and avoid bacterias!'
+  }
+};
 
 // Keep all moving items (water + bacteria) in one array
 const items = [];
@@ -99,7 +141,13 @@ function startGame() {
 		return;
 	}
 
+  if (!selectedDifficulty) {
+    startPrompt.textContent = 'Pick a difficulty first, then press SPACE or TAP to jump.';
+    return;
+  }
+
 	setupAudio();
+  const settings = difficultySettings[selectedDifficulty];
 
 	isGameRunning = true;
 	isGameOver = false;
@@ -107,10 +155,12 @@ function startGame() {
 	startOverlay.classList.remove('show');
 	gameOverOverlay.classList.remove('show');
 
-  if (isMobile) {
-    gameSpeed = 3.5; // Slower speed for mobile users
-    nextSpawnTime = randomInRange(100, 200); // Longer spawn intervals on mobile
-  }
+  spawnMin = settings.spawnMin;
+  spawnMax = settings.spawnMax;
+  speedRamp = settings.speedRamp;
+  speedCap = settings.speedCap;
+  gameSpeed = isMobile ? settings.mobileSpeed : settings.startSpeed;
+  nextSpawnTime = randomInRange(spawnMin, spawnMax);
 }
 
 function updateHud() {
@@ -144,12 +194,20 @@ function resetGame() {
 	gameSpeed = 4.5;
 	spawnTimer = 0;
 	nextSpawnTime = randomInRange(80, 160);
+  spawnMin = 80;
+  spawnMax = 160;
+  speedRamp = 0.03;
+  speedCap = 10;
 	distanceCounter = 0;
 	isChargingJump = false;
 	activePointerId = null;
+  selectedDifficulty = null;
 
 	runner.style.bottom = `${groundY}px`;
 	updateHud();
+  updateGameBackground();
+  difficultyButtons.forEach((button) => button.classList.remove('active'));
+  startPrompt.textContent = 'Pick a difficulty, then press SPACE or TAP to jump.';
 
 	// Show start screen again
 	isGameRunning = false;
@@ -210,6 +268,10 @@ function onKeyDown(event) {
 }
 
 function onPointerDown(event) {
+  if (event.target.closest('.difficulty-button')) {
+    return;
+  }
+
 	event.preventDefault();
 	activePointerId = event.pointerId;
 	beginJumpCharge();
@@ -256,107 +318,84 @@ function createSingleItem(type, emoji, bottom) {
 }
 
 function createItem() {
-    // Determine the type of item to spawn
+    // Determine the type of item to spawn based on selected difficulty
     const randomValue = Math.random();
+    const mode = selectedDifficulty || 'easy';
 
-    // Hard difficulty
-    if (score >= 10000) {
+    if (mode === 'hard') {
       if (lives < 3) {
-        if (randomValue < 0.5) {
-          // 50% chance for bacteria
+        if (randomValue < 0.45) {
           createSingleItem('bacteria', '🦠', 92);
-        } else if (randomValue >= 0.5 && randomValue < 0.7) {
-          // 20% chance for two bacteria stacked (bottom, harder obstacle)
+        } else if (randomValue < 0.67) {
           createSingleItem('bacteria', '🦠', 92);
           createSingleItem('bacteria', '🦠', 132);
-        } else if (randomValue >= 0.7 && randomValue < 0.9) {
-          // 20% chance for two bacteria stacked (top, harder obstacle)
+        } else if (randomValue < 0.84) {
           createSingleItem('bacteria', '🦠', 92);
           createSingleItem('bacteria', '🦠', 282);
-        } else if (randomValue >= 0.9 && randomValue < 0.99) {
-          // 9% chance for bacteria with water on top
+        } else if (randomValue < 0.97) {
           createSingleItem('bacteria', '🦠', 92);
           createSingleItem('water', '💧', randomInRange(132, 282));
-        } else if (randomValue >= 0.99) {
-          // 1% chance for bacteria with heart on top (extra life)
+        } else {
           createSingleItem('bacteria', '🦠', 92);
           createSingleItem('heart', '❤️', 302);
         }
       } else {
         if (randomValue < 0.5) {
-          // 50% chance for bacteria
           createSingleItem('bacteria', '🦠', 92);
-        } else if (randomValue >= 0.5 && randomValue < 0.7) {
-          // 20% chance for two bacteria stacked (bottom, harder obstacle)
+        } else if (randomValue < 0.72) {
           createSingleItem('bacteria', '🦠', 92);
           createSingleItem('bacteria', '🦠', 132);
-        } else if (randomValue >= 0.7 && randomValue < 0.9) {
-          // 20% chance for two bacteria stacked (top, harder obstacle)
+        } else if (randomValue < 0.9) {
           createSingleItem('bacteria', '🦠', 92);
           createSingleItem('bacteria', '🦠', 282);
         } else {
-          // 10% chance for bacteria with water on top
           createSingleItem('bacteria', '🦠', 92);
           createSingleItem('water', '💧', randomInRange(132, 282));
-        } 
+        }
       }
-    // Medium difficulty
-    } else if (score >= 5000) {
+    } else if (mode === 'medium') {
       if (lives < 3) {
-        if (randomValue < 0.7) {
-          // 70% chance for bacteria
+        if (randomValue < 0.68) {
           createSingleItem('bacteria', '🦠', 92);
-        } else if (randomValue >= 0.7 && randomValue < 0.9) {
-          // 20% chance for two bacteria stacked (harder obstacle)
+        } else if (randomValue < 0.86) {
           createSingleItem('bacteria', '🦠', 92);
           createSingleItem('bacteria', '🦠', 132);
-        } else if (randomValue >= 0.9 && randomValue < 0.97) {
-          // 7% chance for bacteria with water on top
+        } else if (randomValue < 0.96) {
           createSingleItem('bacteria', '🦠', 92);
           createSingleItem('water', '💧', randomInRange(132, 282));
-        } else if (randomValue >= 0.97) {
-          // 3% chance for bacteria with heart on top (extra life)
+        } else {
           createSingleItem('bacteria', '🦠', 92);
           createSingleItem('heart', '❤️', 302);
         }
       } else {
-        if (randomValue < 0.7) {
-          // 70% chance for bacteria
+        if (randomValue < 0.68) {
           createSingleItem('bacteria', '🦠', 92);
-        } else if (randomValue >= 0.7 && randomValue < 0.9) {
-          // 20% chance for two bacteria stacked (harder obstacle)
+        } else if (randomValue < 0.88) {
           createSingleItem('bacteria', '🦠', 92);
           createSingleItem('bacteria', '🦠', 132);
         } else {
-          // 10% chance for bacteria with water on top
           createSingleItem('bacteria', '🦠', 92);
           createSingleItem('water', '💧', randomInRange(132, 282));
-        } 
+        }
       }
-    // Easy difficulty
     } else {
       if (lives < 3) {
-        if (randomValue < 0.9) {
-          // 90% chance for bacteria
+        if (randomValue < 0.84) {
           createSingleItem('bacteria', '🦠', 92);
-        } else if (randomValue >= 0.9 && randomValue < 0.95) {
-          // 5% chance for bacteria with water on top
+        } else if (randomValue < 0.94) {
           createSingleItem('bacteria', '🦠', 92);
           createSingleItem('water', '💧', randomInRange(132, 282));
-        } else if (randomValue >= 0.95) {
-          // 5% chance for bacteria with heart on top (extra life)
+        } else {
           createSingleItem('bacteria', '🦠', 92);
           createSingleItem('heart', '❤️', 302);
         }
       } else {
-        if (randomValue < 0.9) {
-          // 90% chance for bacteria
+        if (randomValue < 0.88) {
           createSingleItem('bacteria', '🦠', 92);
         } else {
-          // 10% chance for bacteria with water on top
           createSingleItem('bacteria', '🦠', 92);
           createSingleItem('water', '💧', randomInRange(132, 282));
-        } 
+        }
       }
     }
 }
@@ -438,10 +477,10 @@ function updateSpawning() {
 	if (spawnTimer >= nextSpawnTime) {
 		createItem();
 		spawnTimer = 0;
-		nextSpawnTime = randomInRange(80, 160);
+    nextSpawnTime = randomInRange(spawnMin, spawnMax);
 
-		// Small speed increase makes the endless run harder over time
-		gameSpeed = Math.min(gameSpeed + 0.03, 10);
+    // Keep each difficulty feeling distinct, with a gentle speed ramp per mode
+    gameSpeed = Math.min(gameSpeed + speedRamp, speedCap);
 	}
 }
 
@@ -456,19 +495,21 @@ function updateDistanceScore() {
 }
 
 function updateGameBackground() {
-    if (score >= 10000) {
-        game.classList.remove('day', 'evening');
-        game.classList.add('night'); // Hard difficulty = night
-        jumpInfoMessage.textContent = "Hard (10000+): Stay sharp! Avoid bacterias!";
-    } else if (score >= 5000) {
-        game.classList.remove('day', 'night');
-        game.classList.add('evening'); // Medium difficulty = evening
-        jumpInfoMessage.textContent = "Medium (5000-10000): Watch out for stacked bacterias!";
-    } else {
-        game.classList.remove('evening', 'night');
-        game.classList.add('day'); // Easy difficulty = day
-        jumpInfoMessage.textContent = "Easy (0-5000): Tap to jump and collect water!";
-    }
+  const mode = selectedDifficulty;
+
+  if (mode === 'hard') {
+    game.classList.remove('day', 'evening');
+    game.classList.add('night');
+    jumpInfoMessage.textContent = difficultySettings.hard.message;
+  } else if (mode === 'medium') {
+    game.classList.remove('day', 'night');
+    game.classList.add('evening');
+    jumpInfoMessage.textContent = difficultySettings.medium.message;
+  } else {
+    game.classList.remove('evening', 'night');
+    game.classList.add('day');
+    jumpInfoMessage.textContent = difficultySettings.easy.message;
+  }
 }
 
 function gameLoop() {
@@ -477,7 +518,7 @@ function gameLoop() {
         updateItems();
         updateSpawning();
         updateDistanceScore();
-        updateGameBackground(); // Update background based on score
+        updateGameBackground(); // Keep background synced with selected difficulty
     }
 
     requestAnimationFrame(gameLoop);
@@ -489,6 +530,20 @@ document.addEventListener('keyup', onKeyUp);
 game.addEventListener('pointerdown', onPointerDown);
 document.addEventListener('pointerup', onPointerUp);
 document.addEventListener('pointercancel', onPointerUp);
+
+difficultyButtons.forEach((button) => {
+  button.addEventListener('click', () => {
+    selectedDifficulty = button.dataset.difficulty;
+    difficultyButtons.forEach((otherButton) => {
+      otherButton.classList.remove('active');
+    });
+    button.classList.add('active');
+
+    const modeLabel = difficultySettings[selectedDifficulty].label;
+    startPrompt.textContent = `Selected: ${modeLabel}. Press SPACE or TAP to jump.`;
+    updateGameBackground();
+  });
+});
 
 restartButton.addEventListener('click', () => {
 	resetGame();

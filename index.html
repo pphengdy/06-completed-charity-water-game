@@ -20,8 +20,13 @@
             </div>
 
             <div id="startOverlay" class="overlay show">
-                <h2>START</h2>
-                <p>Press SPACE or TAP to Jump</p>
+                <h2>Choose Difficulty</h2>
+                <div class="difficulty-buttons" role="group" aria-label="Select game difficulty">
+                    <button class="difficulty-button" data-difficulty="easy" type="button">Easy</button>
+                    <button class="difficulty-button" data-difficulty="medium" type="button">Medium</button>
+                    <button class="difficulty-button" data-difficulty="hard" type="button">Hard</button>
+                </div>
+                <p id="startPrompt">Pick a difficulty, then press SPACE or TAP to jump.</p>
             </div>
 
             <div id="gameOverOverlay" class="overlay" hidden>
